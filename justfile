@@ -2,6 +2,10 @@
 
 set shell := ["bash", "-c"]
 
+lint:
+    cargo fmt --all -- --check
+    cargo +nightly clippy --workspace --all-targets -- -D warnings
+
 # Publish to crates.io
 publish:
     cd bbox-core && cargo publish

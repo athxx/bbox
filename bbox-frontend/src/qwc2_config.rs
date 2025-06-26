@@ -1164,7 +1164,7 @@ mod test {
 }"#;
 
         let jsonstr = serde_json::to_string_pretty(&THEMES_JSON as &ThemesJson).unwrap();
-        println!("{}", jsonstr);
+        println!("{jsonstr}");
         assert_eq!(jsonstr, themes_json_str);
 
         // Deserialize:

@@ -336,8 +336,7 @@ impl ProcessingResults for DagsterBackend {
                                     Ok(JobResult::Json(serde_json::from_str(json_string)?))
                                 } else {
                                     Err(error::Error::BackendExecutionError(format!(
-                                        "Unknown metadata entry `{:?}`",
-                                        meta
+                                        "Unknown metadata entry `{meta:?}`"
                                     )))
                                 }
                             } else {

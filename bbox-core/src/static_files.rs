@@ -131,7 +131,7 @@ impl EmbedFile {
         let r = EmbedFile {
             content: E::get(filename)?.data.to_vec(),
             content_type,
-            etag: etag.map(|etag| header::EntityTag::new_strong(format!("{:x}", etag))),
+            etag: etag.map(|etag| header::EntityTag::new_strong(format!("{etag:x}"))),
         };
         Some(r)
     }

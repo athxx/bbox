@@ -319,7 +319,7 @@ mod tests {
         let backend = backend();
         let jobs = backend.process_list().await.unwrap();
         assert_eq!(jobs.len(), 2);
-        assert!(jobs.iter().find(|job| job.name == "hello").is_some());
+        assert!(jobs.iter().any(|job| job.name == "hello"));
 
         let descr = backend
             .get_process_description(&jobs[0].name)
@@ -340,7 +340,7 @@ mod tests {
         if let JobResult::Json(v) = result {
             assert_eq!(v, json!("hello world"));
         } else {
-            assert!(false);
+            panic!("Unexpected result");
         }
     }
 
@@ -364,7 +364,7 @@ mod tests {
         if let JobResult::Json(v) = result {
             assert_eq!(v, json!("Sleep 2"));
         } else {
-            assert!(false);
+            panic!("Unexpected result");
         }
     }
 }
