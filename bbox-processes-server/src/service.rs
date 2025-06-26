@@ -1,19 +1,16 @@
-use crate::backend::ProcessingBackend;
+use crate::backend::{self, ProcessingBackend};
 use crate::config::ProcessesServiceCfg;
-use crate::dagster::DagsterBackend;
 use async_trait::async_trait;
 use bbox_core::cli::{NoArgs, NoCommands};
 use bbox_core::config::CoreServiceCfg;
 use bbox_core::metrics::{no_metrics, NoMetrics};
 use bbox_core::ogcapi::ApiLink;
 use bbox_core::service::OgcApiService;
-
-use log::info;
+use log::warn;
 
 #[derive(Clone)]
 pub struct ProcessesService {
     pub backend: Option<Box<dyn ProcessingBackend>>,
-    pub enabled: bool,
 }
 
 #[async_trait]
@@ -24,17 +21,11 @@ impl OgcApiService for ProcessesService {
     type Metrics = NoMetrics;
 
     async fn create(config: &Self::Config, _core_cfg: &CoreServiceCfg) -> Self {
-        let enabled = if config.has_backend() {
-            true
-        } else {
-            info!("Processing backend configuration missing - service disabled");
-            false
+        if config.num_backend() > 1 {
+            warn!("More than oneProcessing backend configured");
         };
-        let backend = config
-            .dagster_backend
-            .clone()
-            .map(|_cfg| Box::new(DagsterBackend::new()) as Box<dyn ProcessingBackend>);
-        ProcessesService { backend, enabled }
+        let backend = Some(backend::backend_from_cfg());
+        ProcessesService { backend }
     }
     fn conformance_classes(&self) -> Vec<String> {
         vec![
@@ -52,18 +43,14 @@ impl OgcApiService for ProcessesService {
         ]
     }
     fn landing_page_links(&self, api_base: &str) -> Vec<ApiLink> {
-        if self.enabled {
-            vec![ApiLink {
-                href: format!("{api_base}/processes"),
-                rel: Some("processes".to_string()),
-                type_: Some("application/json".to_string()),
-                title: Some("OGC API processes list".to_string()),
-                hreflang: None,
-                length: None,
-            }]
-        } else {
-            vec![]
-        }
+        vec![ApiLink {
+            href: format!("{api_base}/processes"),
+            rel: Some("processes".to_string()),
+            type_: Some("application/json".to_string()),
+            title: Some("OGC API processes list".to_string()),
+            hreflang: None,
+            length: None,
+        }]
     }
     fn openapi_yaml(&self) -> Option<&str> {
         Some(include_str!("openapi.yaml"))

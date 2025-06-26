@@ -29,10 +29,21 @@ Execute process:
 
     curl --header "Content-Type: application/json" \
          --request POST \
+         --data '{"inputs": ["bbox"]}' \
+      http://localhost:8080/processes/hello/execution
+
+    curl --header "Content-Type: application/json" \
+         --request POST \
          --data '{"inputs": {"ops": {"pos_info_query": {"inputs": {"pos_x": 2607545, "pos_y": 1171421}}}}}' \
       http://localhost:8080/processes/pos_info/execution
 
 Execute process asynchronous:
+
+    curl --header "Content-Type: application/json" \
+         --header "Prefer: respond-async" \
+         --request POST \
+         --data '{"inputs": ["2"]}' \
+      http://localhost:8080/processes/sleep/execution
 
     curl --header "Content-Type: application/json" \
          --header "Prefer: respond-async" \

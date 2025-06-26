@@ -1,7 +1,6 @@
 //! Endpoints according to <https://ogcapi.ogc.org/processes/> API
 
-use crate::backend::{Execute, ProcessingExecute, ProcessingProcessMeta, ProcessingResults};
-use crate::dagster::DagsterBackend; // TODO
+use crate::backend::{self, Execute};
 use crate::error;
 use crate::models::*;
 use crate::service::ProcessesService;
@@ -15,9 +14,9 @@ use serde_json::json;
 
 /// retrieve the list of available processes
 async fn process_list(_req: HttpRequest) -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     let jobs = backend.process_list().await.unwrap_or_else(|e| {
-        warn!("Dagster backend error: {e}");
+        warn!("Backend error: {e}");
         Vec::new()
     });
     let processes = jobs
@@ -96,7 +95,7 @@ async fn process_list(_req: HttpRequest) -> HttpResponse {
 
 /// retrieve a process description
 async fn get_process_description(process_id: web::Path<String>) -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     match backend.get_process_description(&process_id).await {
         Ok(descr) => HttpResponse::Ok().json(descr), // TODO: type ProcessDescription
         Err(error::Error::NotFound(type_)) => HttpResponse::NotFound().json(Exception::new(type_)),
@@ -111,7 +110,7 @@ async fn execute(
     req: HttpRequest,
 ) -> JobResultResponse {
     info!("Execute `{process_id}` with parameters `{parameters:?}`");
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     let prefer_async = req
         .headers()
         .get("Prefer")
@@ -145,7 +144,7 @@ async fn execute(
 
 /// retrieve the list of jobs
 async fn get_jobs() -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     match backend.get_jobs().await {
         Ok(jobs) => HttpResponse::Ok().json(jobs), // TODO: type JobList
         Err(e) => HttpResponse::InternalServerError().json(Exception::from(e)),
@@ -154,7 +153,7 @@ async fn get_jobs() -> HttpResponse {
 
 /// retrieve the status of a job
 async fn get_status(job_id: web::Path<String>) -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     match backend.get_status(&job_id).await {
         Ok(status) => HttpResponse::Ok().json(status),
         Err(error::Error::NotFound(type_)) => HttpResponse::NotFound().json(Exception::new(type_)),
@@ -177,7 +176,7 @@ type JobResultResponse = Either<HttpResponse, std::result::Result<NamedFile, std
 
 /// retrieve the result(s) of a job
 async fn get_result(job_id: web::Path<String>) -> JobResultResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     let job_result = backend.get_result(&job_id).await;
     job_result_response(job_result)
 }
@@ -240,7 +239,7 @@ mod tests {
     #[actix_web::test]
     #[ignore]
     async fn test_process_list() -> Result<(), Error> {
-        if !ProcessesServiceCfg::from_config().has_backend() {
+        if ProcessesServiceCfg::from_config().num_backend() != 1 {
             return Ok(());
         }
         let app = test::init_service(

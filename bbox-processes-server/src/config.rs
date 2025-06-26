@@ -47,15 +47,13 @@ impl ProcessesServiceCfg {
                 .extract_inner("processes")
                 .map_err(config_error_exit)
                 .unwrap();
-            if !cfg.has_backend() {
-                config_error_exit("Processing backend configuration missing");
-            }
             cfg
         } else {
             Default::default()
         }
     }
-    pub fn has_backend(&self) -> bool {
-        self.dagster_backend.is_some()
+    pub fn num_backend(&self) -> u8 {
+        self.dagster_backend.as_ref().map_or(0, |_| 1)
+            + self.shell_backend.as_ref().map_or(0, |_| 1)
     }
 }

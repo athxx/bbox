@@ -9,7 +9,7 @@
 use crate::backend::{
     Execute, Job, ProcessingBackend, ProcessingExecute, ProcessingProcessMeta, ProcessingResults,
 };
-use crate::config::{DagsterBackendCfg, ProcessesServiceCfg};
+use crate::config::DagsterBackendCfg;
 use crate::endpoints::JobResult;
 use crate::error::{self, Result};
 use crate::models::{self, StatusCode};
@@ -25,11 +25,8 @@ pub struct DagsterBackend {
 }
 
 impl DagsterBackend {
-    pub fn new() -> Self {
-        let config = ProcessesServiceCfg::from_config()
-            .dagster_backend
-            .expect("Backend config missing");
-        DagsterBackend { config }
+    pub fn new(config: DagsterBackendCfg) -> Self {
+        Self { config }
     }
     async fn graphql_query(
         &self,
@@ -49,12 +46,6 @@ impl DagsterBackend {
             .json(&request)
             .send()
             .await
-    }
-}
-
-impl Default for DagsterBackend {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -741,14 +732,15 @@ query FilteredRunsQuery($runId: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::ProcessesServiceCfg;
 
     #[actix_web::test]
     #[ignore]
     async fn query_test() {
-        if ProcessesServiceCfg::from_config().dagster_backend.is_none() {
+        let Some(config) = ProcessesServiceCfg::from_config().dagster_backend else {
             return;
-        }
-        let backend = DagsterBackend::new();
+        };
+        let backend = DagsterBackend::new(config);
         let jobs = backend.process_list().await.unwrap();
         assert_eq!(jobs[0].name, "get_gemeinde");
         let job_args = backend.get_process_description(&jobs[0].name).await;

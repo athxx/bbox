@@ -3,7 +3,7 @@
 use crate::backend::{
     Execute, Job, ProcessingBackend, ProcessingExecute, ProcessingProcessMeta, ProcessingResults,
 };
-use crate::config::{ProcessesServiceCfg, ShellBackendCfg};
+use crate::config::ShellBackendCfg;
 use crate::endpoints::JobResult;
 use crate::error::{self, Result};
 use crate::models::{StatusCode, StatusInfo};
@@ -21,11 +21,8 @@ pub struct ShellBackend {
 }
 
 impl ShellBackend {
-    pub fn new() -> Self {
-        let config = ProcessesServiceCfg::from_config()
-            .shell_backend
-            .expect("Backend config missing");
-        ShellBackend { config }
+    pub fn new(config: ShellBackendCfg) -> Self {
+        Self { config }
     }
     async fn get_job_infos(&self) -> Result<Vec<StatusInfo>> {
         let cmd = CliCommand::Ps;
@@ -70,7 +67,8 @@ impl ProcessingBackend for ShellBackend {}
 impl ProcessingProcessMeta for ShellBackend {
     async fn process_list(&self) -> Result<Vec<Job>> {
         env::set_current_dir(&self.config.base_path).ok();
-        let justfile = Justfile::parse().unwrap();
+        let justfile =
+            Justfile::parse().map_err(|e| error::Error::BackendExecutionError(e.to_string()))?;
         let recipes = justfile.group_recipes("processes");
         let jobs = recipes
             .into_iter()
