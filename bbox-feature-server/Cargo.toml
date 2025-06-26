@@ -21,7 +21,7 @@ async-trait = { workspace = true }
 bbox-core = { path = "../bbox-core", version = "0.6.2" }
 chrono = { workspace = true }
 clap = { workspace = true }
-dyn-clone = "1.0.6"
+dyn-clone = { workspace = true }
 futures = { workspace = true }
 geozero = { workspace = true, features = [ "with-gpkg", "with-postgis-sqlx" ] }
 log = { workspace = true }

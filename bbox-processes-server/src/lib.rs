@@ -1,3 +1,4 @@
+mod backend;
 pub mod config;
 mod dagster;
 mod endpoints;

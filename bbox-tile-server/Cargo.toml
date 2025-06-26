@@ -34,7 +34,7 @@ bytes = "1.1.0"
 chrono = { workspace = true }
 clap = { workspace = true }
 crossbeam = "0.8.1"
-dyn-clone = "1.0.6"
+dyn-clone = { workspace = true }
 futures = "0.3"
 futures-util = "0.3.21"
 geo-types = "0.7.12"

@@ -1,6 +1,7 @@
 //! Endpoints according to <https://ogcapi.ogc.org/processes/> API
 
-use crate::dagster::{self, DagsterBackend};
+use crate::backend::{Execute, ProcessingExecute, ProcessingProcessMeta, ProcessingResults};
+use crate::dagster::DagsterBackend; // TODO
 use crate::error;
 use crate::models::*;
 use crate::service::ProcessesService;
@@ -106,7 +107,7 @@ async fn get_process_description(process_id: web::Path<String>) -> HttpResponse 
 /// execute a process
 async fn execute(
     process_id: web::Path<String>,
-    parameters: web::Json<dagster::Execute>,
+    parameters: web::Json<Execute>,
     req: HttpRequest,
 ) -> JobResultResponse {
     info!("Execute `{process_id}` with parameters `{parameters:?}`");

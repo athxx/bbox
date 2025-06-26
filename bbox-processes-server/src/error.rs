@@ -7,9 +7,7 @@ use thiserror::Error;
 pub enum Error {
     // Backend errors
     #[error(transparent)]
-    BackendSendError(#[from] awc::error::SendRequestError),
-    #[error(transparent)]
-    BackendResponseError(#[from] awc::error::JsonPayloadError),
+    BackendHttpError(#[from] reqwest::Error),
     #[error(transparent)]
     BackendJsonError(#[from] serde_json::Error),
     #[error("Backend execution error - {0}")]

@@ -1,3 +1,4 @@
+use crate::backend::ProcessingBackend;
 use crate::config::ProcessesServiceCfg;
 use crate::dagster::DagsterBackend;
 use async_trait::async_trait;
@@ -9,9 +10,9 @@ use bbox_core::service::OgcApiService;
 
 use log::info;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct ProcessesService {
-    pub backend: Option<DagsterBackend>,
+    pub backend: Option<Box<dyn ProcessingBackend>>,
     pub enabled: bool,
 }
 
@@ -32,7 +33,7 @@ impl OgcApiService for ProcessesService {
         let backend = config
             .dagster_backend
             .clone()
-            .map(|_cfg| DagsterBackend::new());
+            .map(|_cfg| Box::new(DagsterBackend::new()) as Box<dyn ProcessingBackend>);
         ProcessesService { backend, enabled }
     }
     fn conformance_classes(&self) -> Vec<String> {
