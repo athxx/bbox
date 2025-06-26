@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use log::{error, info};
 use serde_json::json;
 use shell_compose::*;
+use std::path::PathBuf;
 use std::process::{self, Child, Stdio};
 use std::time::Duration;
 use std::{env, thread};
@@ -67,6 +68,9 @@ impl ProcessingBackend for ShellBackend {}
 impl ProcessingProcessMeta for ShellBackend {
     async fn process_list(&self) -> Result<Vec<Job>> {
         env::set_current_dir(&self.config.base_path).ok();
+        if let Ok(dir) = env::current_dir() {
+            info!("Shell backend running from directory: {}", dir.display());
+        }
         let justfile =
             Justfile::parse().map_err(|e| error::Error::BackendExecutionError(e.to_string()))?;
         let recipes = justfile.group_recipes("processes");
@@ -119,7 +123,10 @@ impl ProcessingExecute for ShellBackend {
                 .collect(),
             restart: Some(RestartPolicy::Never),
         };
-        let mut stream = send_command(cmd.into())?;
+        let mut stream = send_command(Message::ExecCommand(
+            cmd,
+            PathBuf::from(&self.config.base_path),
+        ))?;
         let response = stream.receive_message();
         match response {
             Ok(Message::JobsStarted(job_ids)) => {
