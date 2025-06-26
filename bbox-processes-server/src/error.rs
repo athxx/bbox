@@ -9,9 +9,15 @@ pub enum Error {
     #[error(transparent)]
     BackendHttpError(#[from] reqwest::Error),
     #[error(transparent)]
+    BackendIpcClientError(#[from] shell_compose::IpcClientError),
+    #[error(transparent)]
     BackendJsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    BackendShellDispatcherError(#[from] shell_compose::DispatcherError),
     #[error("Backend execution error - {0}")]
     BackendExecutionError(String),
+    #[error("Job execution failed - `{0}`")]
+    BackendExecutionFailed(models::StatusCode),
     // General
     #[error("I/O error")]
     IoError(#[from] std::io::Error),

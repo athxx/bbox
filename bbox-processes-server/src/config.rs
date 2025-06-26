@@ -6,7 +6,16 @@ use serde::Deserialize;
 #[derive(Deserialize, Default, Debug)]
 #[serde(default, deny_unknown_fields)]
 pub struct ProcessesServiceCfg {
+    pub shell_backend: Option<ShellBackendCfg>,
     pub dagster_backend: Option<DagsterBackendCfg>,
+}
+
+/// Shell backend configuration
+#[derive(Deserialize, Clone, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct ShellBackendCfg {
+    /// Justfile path
+    pub base_path: String,
 }
 
 /// Dagster backend configuration

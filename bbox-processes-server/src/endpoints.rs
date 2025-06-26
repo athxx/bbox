@@ -167,6 +167,7 @@ async fn dismiss(job_id: web::Path<String>) -> HttpResponse {
     HttpResponse::InternalServerError().json(job_id.to_string())
 }
 
+#[derive(Debug)]
 pub enum JobResult {
     FilePath(String),
     Json(serde_json::Value),

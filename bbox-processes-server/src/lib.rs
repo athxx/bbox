@@ -5,5 +5,6 @@ mod endpoints;
 mod error;
 mod models;
 pub mod service;
+mod shell;
 
 pub use service::*;

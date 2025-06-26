@@ -25,6 +25,7 @@ dyn-clone = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+shell-compose = "0.4.0"
 swagger = { version = "6.1", features = ["serdejson"] }
 thiserror = { workspace = true }
 tokio = { version = "1", features = ["time"] }

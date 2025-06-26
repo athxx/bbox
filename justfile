@@ -13,3 +13,13 @@ publish:
     # cd bbox-routing-server && cargo publish
     cd bbox-frontend && cargo publish
     cd bbox-server && cargo publish
+
+# Test recipe for processes server
+[group('processes')]
+hello args="world":
+    @echo hello {{args}}
+
+# Test recipe for processes server
+[group('processes')]
+sleep count="1":
+    @for i in {1..{{count}}}; do echo Sleep $i; sleep 1; done
