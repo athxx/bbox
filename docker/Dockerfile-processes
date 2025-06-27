@@ -1,4 +1,4 @@
-FROM rust:1-alpine3.22 AS builder
+FROM rust:1-alpine3.21 AS builder
 
 RUN apk add --no-cache pkgconfig musl-dev curl
 
@@ -14,7 +14,7 @@ RUN cargo install --path bbox-processes-server
 RUN cargo install shell-compose
 
 # -- Runtime stage
-FROM alpine:3.22
+FROM ghcr.io/astral-sh/uv:alpine3.21
 
 # https://wiki.alpinelinux.org/wiki/Podman
 # https://github.com/containers/podman/blob/main/rootless.md
