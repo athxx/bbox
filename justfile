@@ -18,6 +18,12 @@ publish:
     cd bbox-frontend && cargo publish
     cd bbox-server && cargo publish
 
+docker-build svc="bbox-tile-server":
+    nice docker build --build-arg BUILD_DIR={{svc}} -f docker/Dockerfile -t {{svc}} .
+
+docker-build-processes:
+    nice docker build -f docker/Dockerfile-processes -t bbox-processes-server .
+
 # Test recipe for processes server
 [group('processes')]
 hello args="world":
