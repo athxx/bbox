@@ -20,9 +20,12 @@ oidc = ["openidconnect", "reqwest"]
 actix-cors = "0.7.0"
 actix-session = { version = "0.10.0", features = ["cookie-session"] }
 actix-web = { workspace = true }
-actix-web-opentelemetry = { version = "0.13", features = ["metrics-prometheus"] }
+actix-web-opentelemetry = { version = "0.13", features = [
+    "metrics-prometheus",
+] }
 async-stream = { workspace = true }
 async-trait = { workspace = true }
+base64ct = "~1.7" # 1.8.0 has edition2024 feature, which breaks doc build
 chrono = { workspace = true }
 clap = { workspace = true }
 env_logger = "0.11.5"
