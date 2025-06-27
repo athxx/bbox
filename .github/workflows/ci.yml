@@ -128,9 +128,8 @@ jobs:
         ports:
           - 5439:5432
     steps:
-      - uses: cargo-bins/cargo-binstall@main
       - uses: taiki-e/install-action@v2
-        with: { tool: just }
+        with: { tool: "just,shell-compose" }
 
       - name: Checkout sources
         uses: actions/checkout@v4
@@ -143,8 +142,6 @@ jobs:
         uses: arduino/setup-protoc@v3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: cargo binstall shell-compose
 
       - name: Unit Tests (Linux)
         run: cargo test --all
