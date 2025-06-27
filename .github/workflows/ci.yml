@@ -128,6 +128,7 @@ jobs:
         ports:
           - 5439:5432
     steps:
+      - uses: cargo-bins/cargo-binstall@main
       - uses: taiki-e/install-action@v2
         with: { tool: just }
 
