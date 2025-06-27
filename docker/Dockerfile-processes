@@ -1,4 +1,3 @@
-# Same Alpine version as dind (https://hub.docker.com/_/docker)
 FROM rust:1-alpine3.22 AS builder
 
 RUN apk add --no-cache pkgconfig musl-dev curl
@@ -15,18 +14,30 @@ RUN cargo install --path bbox-processes-server
 RUN cargo install shell-compose
 
 # -- Runtime stage
-FROM docker:dind-rootless
+FROM alpine:3.22
 
-USER root
+# https://wiki.alpinelinux.org/wiki/Podman
+# https://github.com/containers/podman/blob/main/rootless.md
+RUN apk add --no-cache shadow podman
+RUN sed -i 's/^driver = "overlay"/driver = "vfs"/' /etc/containers/storage.conf && \
+    ln -s /usr/bin/podman /usr/local/bin/docker
 
 COPY --from=builder /usr/local/cargo/bin/bbox-processes-server /usr/local/bin/
 COPY --from=builder /usr/local/cargo/bin/shell-compose* /usr/local/bin/
 COPY --from=builder /usr/local/bin/just /usr/local/bin/
 
-# Inject application start into entrypoint
-RUN sed --in-place '/exec rootlesskit/i bbox-processes-server serve &' /usr/local/bin/dockerd-entrypoint.sh
+ARG USERNAME=bbox
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
-USER rootless
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USERNAME
+
+USER $USERNAME
+WORKDIR /home/$USERNAME
 
 ENV BBOX_WEBSERVER__SERVER_ADDR="0.0.0.0:8080"
 EXPOSE 8080
+ENTRYPOINT ["bbox-processes-server"]
+CMD ["serve"]
