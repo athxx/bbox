@@ -5,6 +5,7 @@ use crate::error;
 use crate::models::*;
 use crate::service::ProcessesService;
 use actix_files::NamedFile;
+use actix_multipart::form::{json::Json as MpJson, tempfile::TempFile, MultipartForm};
 use actix_web::{
     http::header::ContentEncoding, http::StatusCode, web, Either, HttpRequest, HttpResponse,
 };
@@ -142,6 +143,39 @@ async fn execute(
     }
 }
 
+#[derive(Debug, MultipartForm)]
+struct UploadForm {
+    #[multipart(limit = "100MB")]
+    file: TempFile,
+    json: MpJson<Execute>,
+}
+
+/// execute a process with file upload
+async fn execute_multipart(
+    process_id: web::Path<String>,
+    MultipartForm(form): MultipartForm<UploadForm>,
+    req: HttpRequest,
+) -> JobResultResponse {
+    // Prepend uploaded file info to inputs array
+    let file_name = form.file.file_name.unwrap_or("".to_string());
+    let tmp_file = form.file.file.path().to_string_lossy();
+    let mut inputs: Vec<serde_json::Value> = vec![file_name.into(), tmp_file.into()];
+
+    let mut json = form.json.into_inner();
+    let mut empty_json = json!([]);
+    let mut empty_vec = vec![];
+    inputs.append(
+        json.inputs
+            .as_mut()
+            .unwrap_or(&mut empty_json)
+            .as_array_mut()
+            .unwrap_or(&mut empty_vec),
+    );
+
+    json.inputs = Some(inputs.into());
+    execute(process_id, web::Json(json), req).await
+}
+
 /// retrieve the list of jobs
 async fn get_jobs() -> HttpResponse {
     let backend = backend::backend_from_cfg();
@@ -222,6 +256,10 @@ impl ServiceEndpoints for ProcessesService {
             )
             .service(
                 web::resource("/processes/{processID}/execution").route(web::post().to(execute)),
+            )
+            .service(
+                web::resource("/processes/{processID}/execution_multipart")
+                    .route(web::post().to(execute_multipart)),
             )
             .service(web::resource("/jobs").route(web::get().to(get_jobs)))
             .service(web::resource("/jobs/{jobId}").route(web::get().to(get_status)))

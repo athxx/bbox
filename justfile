@@ -26,10 +26,14 @@ docker-build-processes:
 
 # Test recipe for processes server
 [group('processes')]
-hello args="world":
+hello *args="world":
     @echo hello {{args}}
 
 # Test recipe for processes server
 [group('processes')]
 sleep count="1":
     @for i in {1..{{count}}}; do echo Sleep $i; sleep 1; done
+
+[group('processes')]
+upload fname tmpname *args:
+    ln -s {{tmpname}} $(dirname {{tmpname}})/{{fname}}; ls -l $(dirname {{tmpname}})/{{fname}}

@@ -4,14 +4,13 @@ RUN apk add --no-cache pkgconfig musl-dev curl
 
 # Required for shell processes backend
 RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sh -s -- --to /usr/local/bin
+# Required for shell processes backend
+RUN cargo install shell-compose
 
 WORKDIR /build
 COPY . .
 
 RUN cargo install --path bbox-processes-server
-
-# Required for shell processes backend
-RUN cargo install shell-compose
 
 # -- Runtime stage
 FROM ghcr.io/astral-sh/uv:alpine3.21

@@ -23,7 +23,7 @@ See [Documentation](https://www.bbox.earth/docs/processes-server/configuration/)
 
 List processes:
 
-    curl 'http://localhost:8080/processes'
+    curl http://localhost:8080/processes
 
 Execute process:
 
@@ -36,6 +36,12 @@ Execute process:
          --request POST \
          --data '{"inputs": {"ops": {"pos_info_query": {"inputs": {"pos_x": 2607545, "pos_y": 1171421}}}}}' \
       http://localhost:8080/processes/pos_info/execution
+
+Execute process with file upload:
+
+    curl -F file=@./Cargo.toml \
+         -F 'json={"inputs": ["bbox"]};type=application/json' \
+      http://localhost:8080/processes/upload/execution_multipart
 
 Execute process asynchronous:
 
