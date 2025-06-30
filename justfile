@@ -22,7 +22,7 @@ docker-build svc="bbox-tile-server":
     nice docker build --build-arg BUILD_DIR={{svc}} -f docker/Dockerfile -t {{svc}} .
 
 docker-build-processes:
-    nice docker build -f docker/Dockerfile-processes -t bbox-processes-server .
+    nice docker build -f docker/Dockerfile-processes -t sourcepole/bbox-processes-server .
 
 # Test recipe for processes server
 [group('processes')]
