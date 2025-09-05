@@ -106,6 +106,8 @@ jobs:
           cd bbox-tile-server
           cargo deb -v --deb-revision $(lsb_release -c -s)
           mv ../target/debian/*.deb ../target_releases/
+          cargo deb -v --variant trixie
+          mv ../target/debian/*.deb ../target_releases/
           cargo deb -v --variant bookworm
           mv ../target/debian/*.deb ../target_releases/
           cargo deb -v --variant bullseye
