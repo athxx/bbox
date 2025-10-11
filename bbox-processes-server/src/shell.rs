@@ -318,7 +318,7 @@ mod tests {
     async fn metadata_test() {
         let backend = backend();
         let jobs = backend.process_list().await.unwrap();
-        assert_eq!(jobs.len(), 2);
+        assert_eq!(jobs.len(), 3);
         assert!(jobs.iter().any(|job| job.name == "hello"));
 
         let descr = backend
