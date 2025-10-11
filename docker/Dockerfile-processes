@@ -3,8 +3,6 @@ FROM rust:1-alpine3.21 AS builder
 RUN apk add --no-cache pkgconfig musl-dev curl
 
 # Required for shell processes backend
-RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sh -s -- --to /usr/local/bin
-# Required for shell processes backend
 RUN cargo install shell-compose
 
 WORKDIR /build
@@ -23,7 +21,7 @@ RUN sed -i 's/^driver = "overlay"/driver = "vfs"/' /etc/containers/storage.conf 
 
 COPY --from=builder /usr/local/cargo/bin/bbox-processes-server /usr/local/bin/
 COPY --from=builder /usr/local/cargo/bin/shell-compose* /usr/local/bin/
-COPY --from=builder /usr/local/bin/just /usr/local/bin/
+RUN apk add --no-cache just
 
 ARG USERNAME=bbox
 ARG USER_UID=1000
