@@ -102,6 +102,10 @@ assets = [
     ],
 ]
 
+[package.metadata.deb.variants.trixie]
+revision = "trixie"
+depends = "libc6 (>= 2.41)"
+
 [package.metadata.deb.variants.bookworm]
 revision = "bookworm"
 depends = "libc6 (>= 2.34)"
