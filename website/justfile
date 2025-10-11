@@ -28,7 +28,8 @@ rustdoc:
     cargo +nightly-2024-09-23 rustdoc --lib -p bbox-tile-server -- -Z unstable-options --output-format json
     cargo +nightly-2024-09-23 rustdoc --lib -p bbox-map-server -- -Z unstable-options --output-format json
     cargo +nightly-2024-09-23 rustdoc --lib -p bbox-asset-server -- -Z unstable-options --output-format json
-    cargo +nightly-2024-09-23 rustdoc --lib -p bbox-processes-server -- -Z unstable-options --output-format json
+    # cargo +nightly-2024-09-23 rustdoc --lib -p bbox-processes-server -- -Z unstable-options --output-format json
+    cp bbox_processes_server.json ../target/doc/
     cargo +nightly-2024-09-23 rustdoc --lib -p bbox-routing-server -- -Z unstable-options --output-format json
     @# cat ../target/doc/bbox_tile_server.json | jq . >bbox-tile-server.json
 
