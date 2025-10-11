@@ -7,13 +7,17 @@ use thiserror::Error;
 pub enum Error {
     // Backend errors
     #[error(transparent)]
-    BackendSendError(#[from] awc::error::SendRequestError),
+    BackendHttpError(#[from] reqwest::Error),
     #[error(transparent)]
-    BackendResponseError(#[from] awc::error::JsonPayloadError),
+    BackendIpcClientError(#[from] shell_compose::IpcClientError),
     #[error(transparent)]
     BackendJsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    BackendShellDispatcherError(#[from] shell_compose::DispatcherError),
     #[error("Backend execution error - {0}")]
     BackendExecutionError(String),
+    #[error("Job execution failed - `{0}`")]
+    BackendExecutionFailed(models::StatusCode),
     // General
     #[error("I/O error")]
     IoError(#[from] std::io::Error),

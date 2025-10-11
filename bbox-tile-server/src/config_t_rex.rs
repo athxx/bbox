@@ -277,7 +277,7 @@ pub fn read_config<'a, T: Deserialize<'a>>(path: &str) -> Result<T, String> {
     };
     let mut config_toml = String::new();
     if let Err(err) = file.read_to_string(&mut config_toml) {
-        return Err(format!("Error while reading config: [{}]", err));
+        return Err(format!("Error while reading config: [{err}]"));
     };
 
     parse_config(config_toml, path)
@@ -310,5 +310,5 @@ pub fn parse_config<'a, T: Deserialize<'a>>(config_toml: String, path: &str) -> 
 
     toml.parse::<Value>()
         .and_then(|cfg| cfg.try_into::<T>())
-        .map_err(|err| format!("{} - {}", path, err))
+        .map_err(|err| format!("{path} - {err}"))
 }

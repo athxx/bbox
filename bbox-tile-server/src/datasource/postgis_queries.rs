@@ -387,8 +387,7 @@ fn build_bbox_expr(layer: &VectorLayerCfg, tile_srid: i32, buffer_size: Option<u
     let mut expr = format!("ST_MakeEnvelope($1,$2,$3,$4,{env_srid})");
     if let Some(pixels) = buffer_size {
         if pixels != 0 {
-            expr = format!("ST_MakeEnvelope($1-{p}*!pixel_width!,$2-{p}*!pixel_width!,$3+{p}*!pixel_width!,$4+{p}*!pixel_width!,{srid})",
-                srid=env_srid, p=pixels);
+            expr = format!("ST_MakeEnvelope($1-{pixels}*!pixel_width!,$2-{pixels}*!pixel_width!,$3+{pixels}*!pixel_width!,$4+{pixels}*!pixel_width!,{env_srid})");
         }
     }
     if layer_srid > 0 && layer_srid != env_srid && !layer.no_transform {

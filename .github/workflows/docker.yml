@@ -10,12 +10,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    build:
-      runs-on: ubuntu-latest
-
-      steps:
-
+    steps:
       - uses: actions/checkout@v4
 
       - name: Get version tag
@@ -59,3 +57,12 @@ jobs:
           buildargs: BUILD_DIR
           tags: "${{ steps.get_tag.outputs.tag }}"
           dockerfile: docker/Dockerfile
+
+      - name: Build and Publish bbox-processes-server
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: sourcepole/bbox-processes-server
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          tags: "${{ steps.get_tag.outputs.tag }}"
+          dockerfile: docker/Dockerfile-processes

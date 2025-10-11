@@ -256,7 +256,7 @@ impl CollectionSource for PgCollectionSource {
                         if let TemporalType::DateTime(dt) = parts[0] {
                             builder.push(format!(" {temporal_column} = ",));
                             builder.push_bind(dt);
-                            debug!("{temporal_column} = {}", dt);
+                            debug!("{temporal_column} = {dt}");
                         }
                     } else {
                         match parts[0] {
@@ -268,22 +268,22 @@ impl CollectionSource for PgCollectionSource {
                                 TemporalType::DateTime(dt) => {
                                     builder.push(format!(" {temporal_column} <= ",));
                                     builder.push_bind(dt);
-                                    debug!("{temporal_column} <= {}", dt);
+                                    debug!("{temporal_column} <= {dt}");
                                 }
                             },
                             TemporalType::DateTime(dt1) => match parts[1] {
                                 TemporalType::Open => {
                                     builder.push(format!(" {temporal_column} >= ",));
                                     builder.push_bind(dt1);
-                                    debug!("{temporal_column} >= {}", dt1);
+                                    debug!("{temporal_column} >= {dt1}");
                                 }
                                 TemporalType::DateTime(dt2) => {
                                     builder.push(format!(" {temporal_column} >= "));
                                     builder.push_bind(dt1);
-                                    debug!("{temporal_column} >= {}", dt1);
+                                    debug!("{temporal_column} >= {dt1}");
                                     builder.push(format!(" and {temporal_end_column} <= ",));
                                     builder.push_bind(dt2);
-                                    debug!("{temporal_column} <= {}", dt2);
+                                    debug!("{temporal_column} <= {dt2}");
                                 }
                             },
                         }

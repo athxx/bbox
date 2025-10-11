@@ -306,7 +306,7 @@ mod test {
 </WMS_Capabilities>
     "#;
         let cap: WmsCapabilities = from_reader(s.as_bytes()).unwrap();
-        println!("{:#?}", cap);
+        println!("{cap:#?}");
 
         assert_eq!(cap.version, "1.3.0");
         assert_eq!(cap.service.name, "WMS");
@@ -583,7 +583,7 @@ mod test {
 </WMS_Capabilities>
     "#;
         let cap: WmsCapabilities = from_reader(s.as_bytes()).unwrap();
-        println!("{:#?}", cap);
+        println!("{cap:#?}");
 
         assert_eq!(cap.version, "1.3.0");
         assert_eq!(cap.service.name, "WMS");
@@ -1159,7 +1159,7 @@ mod test {
 </WMS_Capabilities>
     "#;
         let cap: WmsCapabilities = from_reader(s.as_bytes()).unwrap();
-        println!("{:#?}", cap);
+        println!("{cap:#?}");
 
         assert_eq!(cap.version, "1.3.0");
         assert_eq!(cap.service.name, "WMS");

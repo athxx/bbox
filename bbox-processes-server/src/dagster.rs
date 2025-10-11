@@ -6,10 +6,14 @@
 //
 // https://docs.dagster.io/concepts/dagit/graphql#using-the-graphql-api
 
-use crate::config::{DagsterBackendCfg, ProcessesServiceCfg};
+use crate::backend::{
+    Execute, Job, ProcessingBackend, ProcessingExecute, ProcessingProcessMeta, ProcessingResults,
+};
+use crate::config::DagsterBackendCfg;
 use crate::endpoints::JobResult;
 use crate::error::{self, Result};
 use crate::models::{self, StatusCode};
+use async_trait::async_trait;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -21,38 +25,32 @@ pub struct DagsterBackend {
 }
 
 impl DagsterBackend {
-    pub fn new() -> Self {
-        let config = ProcessesServiceCfg::from_config()
-            .dagster_backend
-            .expect("Backend config missing");
-        DagsterBackend { config }
+    pub fn new(config: DagsterBackendCfg) -> Self {
+        Self { config }
     }
-    fn graphql_query(
+    async fn graphql_query(
         &self,
         operation_name: &str,
         variables: serde_json::Value,
         query: &str,
-    ) -> awc::SendClientRequest {
-        let client = awc::Client::builder()
-            .timeout(Duration::from_millis(
-                self.config.request_timeout.unwrap_or(10000),
-            ))
-            .finish();
+    ) -> std::result::Result<reqwest::Response, reqwest::Error> {
+        let client = reqwest::Client::new();
         let request = json!({
             "operationName": operation_name,
             "body": "json",
             "variables": variables,
             "query": query
         });
-        client.post(&self.config.graphql_url).send_json(&request)
+        client
+            .post(&self.config.graphql_url)
+            .json(&request)
+            .send()
+            .await
     }
 }
 
-impl Default for DagsterBackend {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+#[async_trait]
+impl ProcessingBackend for DagsterBackend {}
 
 // --- process_list ---
 
@@ -72,31 +70,26 @@ struct RepositoryOrError {
     jobs: Vec<Job>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Job {
-    pub name: String,
-    pub description: Option<String>,
-}
-
-impl DagsterBackend {
-    pub async fn process_list(&self) -> Result<Vec<Job>> {
+#[async_trait]
+impl ProcessingProcessMeta for DagsterBackend {
+    async fn process_list(&self) -> Result<Vec<Job>> {
         let variables = json!({"selector":{
             "repositoryName": &self.config.repository_name,
             "repositoryLocationName": &self.config.repository_location_name
         }});
-        let mut response = self
+        let response = self
             .graphql_query("JobsQuery", variables, JOBS_QUERY)
             .await?;
         let resp: JobsQueryResponse = response.json().await?;
         Ok(resp.data.repository_or_error.jobs)
     }
-    pub async fn get_process_description(&self, process_id: &str) -> Result<serde_json::Value> {
+    async fn get_process_description(&self, process_id: &str) -> Result<serde_json::Value> {
         let variables = json!({"selector":{
                 "repositoryName": &self.config.repository_name,
                 "repositoryLocationName": &self.config.repository_location_name,
                 "pipelineName": process_id
         }});
-        let mut response = self
+        let response = self
             .graphql_query("OpSelectorQuery", variables, JOB_ARGS_QUERY)
             .await?;
         Ok(response.json().await?)
@@ -104,13 +97,6 @@ impl DagsterBackend {
 }
 
 // --- execute ---
-
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct Execute {
-    pub inputs: Option<serde_json::Value>,
-    pub outputs: Option<serde_json::Value>,
-    pub response: Option<String>,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct LaunchRunResponse {
@@ -138,8 +124,9 @@ struct ErrorMessage {
     message: String,
 }
 
-impl DagsterBackend {
-    pub async fn execute(&self, process_id: &str, params: &Execute) -> Result<models::StatusInfo> {
+#[async_trait]
+impl ProcessingExecute for DagsterBackend {
+    async fn execute(&self, process_id: &str, params: &Execute) -> Result<models::StatusInfo> {
         let inputs = params.inputs.as_ref().map(|o| o.to_string());
         let variables = json!({
                 "selector":{
@@ -149,7 +136,7 @@ impl DagsterBackend {
                 },
                 "runConfigData": inputs
         });
-        let mut response = self
+        let response = self
             .graphql_query("LaunchRunMutation", variables, EXECUTE_JOB_QUERY)
             .await?;
         // {"data":{"launchRun":{"run":{"runId":"d719c08f-d38e-4dbf-ac10-8fc3cf8412e3"}}}
@@ -182,7 +169,7 @@ impl DagsterBackend {
         }
     }
 
-    pub async fn execute_sync(&self, process_id: &str, params: &Execute) -> Result<JobResult> {
+    async fn execute_sync(&self, process_id: &str, params: &Execute) -> Result<JobResult> {
         let mut status_info = self.execute(process_id, params).await?;
         let job_id = status_info.job_id.clone();
         while status_info.status == StatusCode::ACCEPTED
@@ -202,9 +189,9 @@ impl DagsterBackend {
         self.get_result(&job_id).await
     }
 
-    pub async fn get_jobs(&self) -> Result<serde_json::Value> {
+    async fn get_jobs(&self) -> Result<serde_json::Value> {
         let variables = json!({});
-        let mut response = self
+        let response = self
             .graphql_query("RunsQuery", variables, RUNS_QUERY)
             .await?;
         Ok(response.json().await?)
@@ -284,10 +271,11 @@ struct RunResult {
     event_connection: EventConnection,
 }
 
-impl DagsterBackend {
-    pub async fn get_status(&self, job_id: &str) -> Result<models::StatusInfo> {
+#[async_trait]
+impl ProcessingResults for DagsterBackend {
+    async fn get_status(&self, job_id: &str) -> Result<models::StatusInfo> {
         let variables = json!({ "runId": job_id });
-        let mut response = self
+        let response = self
             .graphql_query("FilteredRunsQuery", variables, FILTERED_RUNS_QUERY)
             .await?;
         // {"data":{"runsOrError":{"results":[{"assets":[],"jobName":"create_db_schema_qwc","runId":"4a979b42-5831-4368-9913-685293a22ebc","stats":{"endTime":1654603294.525416,"startTime":1654603291.751443,"stepsFailed":1},"status":"FAILURE"}]}}}
@@ -324,9 +312,9 @@ impl DagsterBackend {
         }
     }
 
-    pub async fn get_result(&self, job_id: &str) -> Result<JobResult> {
+    async fn get_result(&self, job_id: &str) -> Result<JobResult> {
         let variables = json!({ "runId": job_id });
-        let mut response = self
+        let response = self
             .graphql_query("FilteredRunsQuery", variables, FILTERED_RUNS_QUERY)
             .await?;
         // {"data":{"runsOrError":{"results":[{"assets":[{"assetMaterializations":[{"label":"get_gemeinde","metadataEntries":[{"jsonString":"{\"gemeinden\": [{\"bfs_nummer\": 770, \"gemeinde\": \"Stocken-H\\u00f6fen\", \"kanton\": \"BE\"}, {\"bfs_nummer\": 763, \"gemeinde\": \"Erlenbach im Simmental\", \"kanton\": \"BE\"}, {\"bfs_nummer\": 761, \"gemeinde\": \"D\\u00e4rstetten\", \"kanton\": \"BE\"}], \"lk_blatt\": 3451}"}]}],"id":"AssetKey(['get_gemeinde'])"}],"jobName":"get_gemeinde","runId":"c54ca13c-48ff-470e-8123-8f8f162208bd","stats":{"endTime":1654269774.36158,"startTime":1654269773.145739,"stepsFailed":0},"status":"SUCCESS"}]}}}
@@ -348,8 +336,7 @@ impl DagsterBackend {
                                     Ok(JobResult::Json(serde_json::from_str(json_string)?))
                                 } else {
                                     Err(error::Error::BackendExecutionError(format!(
-                                        "Unknown metadata entry `{:?}`",
-                                        meta
+                                        "Unknown metadata entry `{meta:?}`"
                                     )))
                                 }
                             } else {
@@ -383,7 +370,9 @@ impl DagsterBackend {
             }
         }
     }
+}
 
+impl DagsterBackend {
     /// Extract message, description and error from failure event
     fn extract_error_message(
         &self,
@@ -742,14 +731,15 @@ query FilteredRunsQuery($runId: String) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::ProcessesServiceCfg;
 
     #[actix_web::test]
     #[ignore]
     async fn query_test() {
-        if ProcessesServiceCfg::from_config().dagster_backend.is_none() {
+        let Some(config) = ProcessesServiceCfg::from_config().dagster_backend else {
             return;
-        }
-        let backend = DagsterBackend::new();
+        };
+        let backend = DagsterBackend::new(config);
         let jobs = backend.process_list().await.unwrap();
         assert_eq!(jobs[0].name, "get_gemeinde");
         let job_args = backend.get_process_description(&jobs[0].name).await;

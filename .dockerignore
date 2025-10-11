@@ -4,6 +4,7 @@
 /.github
 /docker
 README.md
+/justfile
 /bbox.toml
 /assets
 /bbox.sublime-*

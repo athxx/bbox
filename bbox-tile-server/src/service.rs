@@ -448,7 +448,7 @@ impl TileSet {
             .await?;
         // TODO: if tiledata.empty() { return Ok(None) }
         if let Some(cache_max_age) = tileset.cache_control_max_age(xyz.z) {
-            tiledata.insert_header(("Cache-Control", format!("max-age={}", cache_max_age)));
+            tiledata.insert_header(("Cache-Control", format!("max-age={cache_max_age}")));
         }
         if tileset.is_cachable_at(xyz.z) {
             debug!("Writing tile into cache @ {xyz:?}");

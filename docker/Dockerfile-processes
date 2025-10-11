@@ -1,0 +1,42 @@
+FROM rust:1-alpine3.21 AS builder
+
+RUN apk add --no-cache pkgconfig musl-dev curl
+
+# Required for shell processes backend
+RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sh -s -- --to /usr/local/bin
+# Required for shell processes backend
+RUN cargo install shell-compose
+
+WORKDIR /build
+COPY . .
+
+RUN cargo install --path bbox-processes-server
+
+# -- Runtime stage
+FROM ghcr.io/astral-sh/uv:alpine3.21
+
+# https://wiki.alpinelinux.org/wiki/Podman
+# https://github.com/containers/podman/blob/main/rootless.md
+RUN apk add --no-cache shadow podman
+RUN sed -i 's/^driver = "overlay"/driver = "vfs"/' /etc/containers/storage.conf && \
+    ln -s /usr/bin/podman /usr/local/bin/docker
+
+COPY --from=builder /usr/local/cargo/bin/bbox-processes-server /usr/local/bin/
+COPY --from=builder /usr/local/cargo/bin/shell-compose* /usr/local/bin/
+COPY --from=builder /usr/local/bin/just /usr/local/bin/
+
+ARG USERNAME=bbox
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USERNAME
+
+USER $USERNAME
+WORKDIR /home/$USERNAME
+
+ENV BBOX_WEBSERVER__SERVER_ADDR="0.0.0.0:8080"
+EXPOSE 8080
+ENTRYPOINT ["bbox-processes-server"]
+CMD ["serve"]

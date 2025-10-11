@@ -1,10 +1,11 @@
 //! Endpoints according to <https://ogcapi.ogc.org/processes/> API
 
-use crate::dagster::{self, DagsterBackend};
+use crate::backend::{self, Execute};
 use crate::error;
 use crate::models::*;
 use crate::service::ProcessesService;
 use actix_files::NamedFile;
+use actix_multipart::form::{json::Json as MpJson, tempfile::TempFile, MultipartForm};
 use actix_web::{
     http::header::ContentEncoding, http::StatusCode, web, Either, HttpRequest, HttpResponse,
 };
@@ -14,9 +15,9 @@ use serde_json::json;
 
 /// retrieve the list of available processes
 async fn process_list(_req: HttpRequest) -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     let jobs = backend.process_list().await.unwrap_or_else(|e| {
-        warn!("Dagster backend error: {e}");
+        warn!("Backend error: {e}");
         Vec::new()
     });
     let processes = jobs
@@ -95,7 +96,7 @@ async fn process_list(_req: HttpRequest) -> HttpResponse {
 
 /// retrieve a process description
 async fn get_process_description(process_id: web::Path<String>) -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     match backend.get_process_description(&process_id).await {
         Ok(descr) => HttpResponse::Ok().json(descr), // TODO: type ProcessDescription
         Err(error::Error::NotFound(type_)) => HttpResponse::NotFound().json(Exception::new(type_)),
@@ -106,11 +107,11 @@ async fn get_process_description(process_id: web::Path<String>) -> HttpResponse 
 /// execute a process
 async fn execute(
     process_id: web::Path<String>,
-    parameters: web::Json<dagster::Execute>,
+    parameters: web::Json<Execute>,
     req: HttpRequest,
 ) -> JobResultResponse {
     info!("Execute `{process_id}` with parameters `{parameters:?}`");
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     let prefer_async = req
         .headers()
         .get("Prefer")
@@ -142,9 +143,42 @@ async fn execute(
     }
 }
 
+#[derive(Debug, MultipartForm)]
+struct UploadForm {
+    #[multipart(limit = "100MB")]
+    file: TempFile,
+    json: MpJson<Execute>,
+}
+
+/// execute a process with file upload
+async fn execute_multipart(
+    process_id: web::Path<String>,
+    MultipartForm(form): MultipartForm<UploadForm>,
+    req: HttpRequest,
+) -> JobResultResponse {
+    // Prepend uploaded file info to inputs array
+    let file_name = form.file.file_name.unwrap_or("".to_string());
+    let tmp_file = form.file.file.path().to_string_lossy();
+    let mut inputs: Vec<serde_json::Value> = vec![file_name.into(), tmp_file.into()];
+
+    let mut json = form.json.into_inner();
+    let mut empty_json = json!([]);
+    let mut empty_vec = vec![];
+    inputs.append(
+        json.inputs
+            .as_mut()
+            .unwrap_or(&mut empty_json)
+            .as_array_mut()
+            .unwrap_or(&mut empty_vec),
+    );
+
+    json.inputs = Some(inputs.into());
+    execute(process_id, web::Json(json), req).await
+}
+
 /// retrieve the list of jobs
 async fn get_jobs() -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     match backend.get_jobs().await {
         Ok(jobs) => HttpResponse::Ok().json(jobs), // TODO: type JobList
         Err(e) => HttpResponse::InternalServerError().json(Exception::from(e)),
@@ -153,7 +187,7 @@ async fn get_jobs() -> HttpResponse {
 
 /// retrieve the status of a job
 async fn get_status(job_id: web::Path<String>) -> HttpResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     match backend.get_status(&job_id).await {
         Ok(status) => HttpResponse::Ok().json(status),
         Err(error::Error::NotFound(type_)) => HttpResponse::NotFound().json(Exception::new(type_)),
@@ -166,6 +200,7 @@ async fn dismiss(job_id: web::Path<String>) -> HttpResponse {
     HttpResponse::InternalServerError().json(job_id.to_string())
 }
 
+#[derive(Debug)]
 pub enum JobResult {
     FilePath(String),
     Json(serde_json::Value),
@@ -175,7 +210,7 @@ type JobResultResponse = Either<HttpResponse, std::result::Result<NamedFile, std
 
 /// retrieve the result(s) of a job
 async fn get_result(job_id: web::Path<String>) -> JobResultResponse {
-    let backend = DagsterBackend::new();
+    let backend = backend::backend_from_cfg();
     let job_result = backend.get_result(&job_id).await;
     job_result_response(job_result)
 }
@@ -222,6 +257,10 @@ impl ServiceEndpoints for ProcessesService {
             .service(
                 web::resource("/processes/{processID}/execution").route(web::post().to(execute)),
             )
+            .service(
+                web::resource("/processes/{processID}/execution_multipart")
+                    .route(web::post().to(execute_multipart)),
+            )
             .service(web::resource("/jobs").route(web::get().to(get_jobs)))
             .service(web::resource("/jobs/{jobId}").route(web::get().to(get_status)))
             .service(web::resource("/jobs/{jobId}").route(web::delete().to(dismiss)))
@@ -238,7 +277,7 @@ mod tests {
     #[actix_web::test]
     #[ignore]
     async fn test_process_list() -> Result<(), Error> {
-        if !ProcessesServiceCfg::from_config().has_backend() {
+        if ProcessesServiceCfg::from_config().num_backend() != 1 {
             return Ok(());
         }
         let app = test::init_service(
