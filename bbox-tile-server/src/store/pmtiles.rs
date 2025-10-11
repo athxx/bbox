@@ -5,8 +5,7 @@ use bbox_core::{Compression, Format, TileResponse};
 use log::{info, warn};
 use martin_mbtiles::Metadata;
 use pmtiles::{
-    async_reader::AsyncPmTilesReader, tile_id, MmapBackend, PmTilesStreamWriter, PmTilesWriter,
-    TileType,
+    async_reader::AsyncPmTilesReader, MmapBackend, PmTilesStreamWriter, PmTilesWriter, TileType,
 };
 use serde_json::json;
 use std::ffi::OsStr;
@@ -190,7 +189,7 @@ impl TileWriter for PmtilesStoreWriter {
         self.archive
             .as_mut()
             .expect("initialized")
-            .add_tile(tile_id(xyz.z, xyz.x, xyz.y), &data)?;
+            .add_tile(xyz.z, xyz.x, xyz.y, &data)?;
         Ok(())
     }
     fn finalize(&mut self) -> Result<(), TileStoreError> {

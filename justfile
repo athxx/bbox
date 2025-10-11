@@ -2,9 +2,21 @@
 
 set shell := ["bash", "-c"]
 
+# Run Tests
+test:
+    cargo test --all
+
+# Run Test DB
+mvtbenchdb:
+    docker run -p 127.0.0.1:5439:5432 -d --name mvtbenchdb --rm sourcepole/mvtbenchdb:v1.2
+
+# Run DB Tests
+test-db:
+    cargo test --all -- --ignored
+
 lint:
     cargo fmt --all -- --check
-    cargo +nightly clippy --workspace --all-targets -- -D warnings
+    cargo clippy --workspace --all-targets -- -D warnings
 
 # Publish to crates.io
 publish:
