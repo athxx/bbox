@@ -2183,16 +2183,15 @@ dependencies = [
 
 [[package]]
 name = "fmmap"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6099ab52d5329340a3014f60ca91bc892181ae32e752360d07be9295924dcb0b"
+checksum = "687c574434dc6e3cd24a363fe0944711174f947fe71696fdc9a0ae046fe6e715"
 dependencies = [
- "async-trait",
  "byteorder",
  "bytes 1.10.1",
  "enum_dispatch",
  "fs4",
- "memmapix",
+ "memmap2",
  "parse-display",
  "pin-project-lite",
  "tokio",
@@ -2221,14 +2220,13 @@ dependencies = [
 
 [[package]]
 name = "fs4"
-version = "0.6.6"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2eeb4ed9e12f43b7fa0baae3f9cdda28352770132ef2e09a23760c29cae8bd47"
+checksum = "c29c30684418547d476f0b48e84f4821639119c483b1eccd566c8cd0cd05f521"
 dependencies = [
- "async-trait",
  "rustix 0.38.44",
  "tokio",
- "windows-sys 0.48.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2523,7 +2521,7 @@ dependencies = [
  "bstr",
  "log",
  "regex-automata",
- "regex-syntax 0.8.7",
+ "regex-syntax",
 ]
 
 [[package]]
@@ -3442,12 +3440,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
-name = "memmapix"
-version = "0.7.6"
+name = "memmap2"
+version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f517ab414225d5f1755bd284d9545bd08a72a3958b3c6384d72e95de9cc1a1d3"
+checksum = "843a98750cd611cc2965a8213b53b43e715f13c37a9e096c6408e69990961db7"
 dependencies = [
- "rustix 0.38.44",
+ "libc",
 ]
 
 [[package]]
@@ -3977,26 +3975,25 @@ dependencies = [
 
 [[package]]
 name = "parse-display"
-version = "0.8.2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6509d08722b53e8dafe97f2027b22ccbe3a5db83cb352931e9716b0aa44bc5c"
+checksum = "287d8d3ebdce117b8539f59411e4ed9ec226e0a4153c7f55495c6070d68e6f72"
 dependencies = [
- "once_cell",
  "parse-display-derive",
  "regex",
+ "regex-syntax",
 ]
 
 [[package]]
 name = "parse-display-derive"
-version = "0.8.2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68517892c8daf78da08c0db777fcc17e07f2f63ef70041718f8a7630ad84f341"
+checksum = "7fc048687be30d79502dea2f623d052f3a074012c6eac41726b7ab17213616b1"
 dependencies = [
- "once_cell",
  "proc-macro2",
  "quote",
  "regex",
- "regex-syntax 0.7.5",
+ "regex-syntax",
  "structmeta",
  "syn 2.0.106",
 ]
@@ -4145,8 +4142,9 @@ checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
 
 [[package]]
 name = "pmtiles"
-version = "0.12.0"
-source = "git+https://github.com/pka/pmtiles-rs.git?rev=e05ca17f3a29eac998766da8f6fc412b47b6ccd9#e05ca17f3a29eac998766da8f6fc412b47b6ccd9"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47a6cf8a4df593fba37df4e058f57ef0634304d1a8d6b5bf75922c1d1a5b520b"
 dependencies = [
  "async-compression",
  "bytes 1.10.1",
@@ -4154,7 +4152,7 @@ dependencies = [
  "flate2",
  "fmmap",
  "hilbert_2d",
- "thiserror 1.0.69",
+ "thiserror 2.0.17",
  "tokio",
  "varint-rs",
 ]
@@ -4590,7 +4588,7 @@ dependencies = [
  "aho-corasick",
  "memchr",
  "regex-automata",
- "regex-syntax 0.8.7",
+ "regex-syntax",
 ]
 
 [[package]]
@@ -4601,7 +4599,7 @@ checksum = "722166aa0d7438abbaa4d5cc2c649dac844e8c56d82fb3d33e9c34b5cd268fc6"
 dependencies = [
  "aho-corasick",
  "memchr",
- "regex-syntax 0.8.7",
+ "regex-syntax",
 ]
 
 [[package]]
@@ -4609,12 +4607,6 @@ name = "regex-lite"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d942b98df5e658f56f20d592c7f868833fe38115e65c33003d8cd224b0155da"
-
-[[package]]
-name = "regex-syntax"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbb5fb1acd8a1a18b3dd5be62d25485eb770e05afb408a9627d14d451bae12da"
 
 [[package]]
 name = "regex-syntax"
@@ -5746,9 +5738,9 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "structmeta"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78ad9e09554f0456d67a69c1584c9798ba733a5b50349a6c0d0948710523922d"
+checksum = "2e1575d8d40908d70f6fd05537266b90ae71b15dbbe7a8b7dffa2b759306d329"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5758,9 +5750,9 @@ dependencies = [
 
 [[package]]
 name = "structmeta-derive"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a60bcaff7397072dca0017d1db428e30d5002e00b6847703e2e42005c95fbe00"
+checksum = "152a0b65a590ff6c3da95cabe2353ee04e6167c896b28e3b14478c2636c922fc"
 dependencies = [
  "proc-macro2",
  "quote",

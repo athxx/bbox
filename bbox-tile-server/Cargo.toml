@@ -46,10 +46,7 @@ martin-tile-utils = "0.5.1"
 num_cpus = { workspace = true }
 ogcapi-types = { version = "0.2.0", default-features = false }
 once_cell = { workspace = true }
-#pmtiles = { version = "0.3.1", features = ["mmap-async-tokio"] }
-pmtiles = { git = "https://github.com/pka/pmtiles-rs.git", rev = "e05ca17f3a29eac998766da8f6fc412b47b6ccd9", features = [
-    "mmap-async-tokio",
-] }
+pmtiles = { version = "0.14.0", features = ["mmap-async-tokio", "write"] }
 prometheus = { workspace = true }
 pumps = "0.0.3"
 regex = "1.10.3"
