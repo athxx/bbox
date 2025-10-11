@@ -39,7 +39,7 @@ futures = "0.3"
 futures-util = "0.3.21"
 geo-types = "0.7.12"
 geozero = { workspace = true, features = ["with-mvt", "with-postgis-sqlx"] }
-indicatif = "0.16.2"
+indicatif = "0.18.0"
 log = { workspace = true }
 martin-mbtiles = { package = "mbtiles", version = "0.11.1", default-features = false }
 martin-tile-utils = "0.5.1"

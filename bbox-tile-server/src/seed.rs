@@ -18,7 +18,8 @@ fn progress_bar() -> ProgressBar {
     let progress = ProgressBar::new_spinner();
     progress.set_style(
         ProgressStyle::default_spinner()
-            .template("{elapsed_precise} ({per_sec}) {spinner} {pos} {msg}"),
+            .template("{elapsed_precise} ({per_sec}) {spinner} {pos} {msg}")
+            .expect("valid template"),
     );
     progress
 }
@@ -220,7 +221,9 @@ impl TileService {
         while let Some(_output) = output_receiver.recv().await {}
 
         progress_main.set_style(
-            ProgressStyle::default_spinner().template("{elapsed_precise} ({per_sec}) {msg}"),
+            ProgressStyle::default_spinner()
+                .template("{elapsed_precise} ({per_sec}) {msg}")
+                .expect("valid template"),
         );
         let cnt = progress_main.position() + 1;
         let elapsed = progress_main.elapsed().as_millis() as f64 / 1000.0;
